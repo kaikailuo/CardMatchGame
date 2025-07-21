@@ -1,0 +1,18 @@
+# 忽略 Visual Studio 临时文件
+.vs/
+*.user
+*.aps
+*.sdf
+*.cache
+*.pdb
+*.ilk
+*.log
+
+# 忽略编译输出目录
+proj.win32/Debug*/
+proj.win32/Release*/
+proj.win32/*.tlog
+proj.win32/*.log
+
+# 忽略资源编译器缓存
+Resources/*.aps
