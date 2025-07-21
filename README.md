@@ -5,19 +5,20 @@
 ---
 
 ## 📂 项目结构说明
-
+```
 Classes/
-├── configs/ # 游戏配置（静态数据）
-├── models/ # 数据模型，描述游戏状态
-├── views/ # 视图组件，处理界面展示与交互
-├── controllers/ # 控制器，协调模型与视图之间的逻辑
-├── managers/ # 管理器（如资源管理、游戏状态管理）
-├── services/ # 服务层（处理业务逻辑，可为单例）
-├── utils/ # 工具类（如字符串处理、坐标计算等）
+├── configs
+├── models
+├── views
+├── controllers
+├── managers
+├── services
+├── utils
 AppDelegate.cpp/h # 程序入口
+
 proj.win32/ # Visual Studio 工程文件
 Resources/ # 图片、音效、字体等资源
-
+```
 
 
 ---
