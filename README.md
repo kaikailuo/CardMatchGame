@@ -20,7 +20,7 @@ Classes/
 │
 ├── models/ # 数据模型层
 │ ├── CardModel.* # 单张卡牌状态
-│ ├── CardStateModel.* # 选中/高亮状态
+│ ├── CardStateModel.* # 整体卡牌状态(由于较复杂，选择与GameModel分离)
 │ └── GameModel.* # 整体游戏状态
 │
 ├── views/ # 视图层
@@ -35,7 +35,7 @@ Classes/
 │ └── GameView.* # 主游戏界面容器
 │
 ├── controllers/ # 控制器层
-│ ├── GameController.* # 总流程控制
+│ ├── GameController.* # 游戏总流程控制
 │ ├── StackController.* # 叠牌区逻辑
 │ ├── PlayfieldController.* # 桌面交互
 │ ├── MatchZoneController.* # 匹配区操作
@@ -46,11 +46,10 @@ Classes/
 │ └── GameViewManager.* # View 显示/刷新管理
 │
 ├── services/ # 服务层
-│ └── GameModelFromLevelGenerator.* # 根据配置生成模型
+│ └── GameModelFromLevelGenerator.* # 根据 Config 生成 Model(关卡)
 │
 └── utils/ # 工具类
-└── Utils.* # 通用辅助（位置、JSON 等）
-AppDelegate.cpp/h # 程序入口
+  └── Utils.* # 通用辅助（位置）
 
 proj.win32/ # Visual Studio 工程文件
 Resources/ # 图片、音效、字体等资源
@@ -67,13 +66,14 @@ Resources/ # 图片、音效、字体等资源
    - 初始化引擎、预加载资源  
    - 进入关卡选择场景 `LevelSelectScene`
 
-2. **LevelSelectController**  
-   - 调用 `LevelConfigLoader` 读取 JSON  
-   - 为每关生成 `LevelButtonView` 并注册回调  
+2. **LevelSelectController**
+   - 为每关生成 `LevelButtonView` 并注册回调
+   - 利用回调所得的`levelName` 在`GameModel`初始化关卡id
    - 点击关卡按钮后，切换到 `GameScene`
+   - 
 
-3. **GameController**  
-   - 在 `GameScene::init()` 中创建：  
+4. **GameController**  
+   - 在 `GameScene::init()` 中有序创建：  
      - `GameModel`（通过 `GameModelFromLevelGenerator` 构建）  
      - 多个子控制器（Stack/Playfield/MatchZone/Undo）  
      - 对应的视图层组件  
@@ -84,7 +84,7 @@ Resources/ # 图片、音效、字体等资源
 ### ▶ 交互主循环
 
 1. **卡牌点击**  
-   - `CardView` 触发点击事件 → 调用对应 Controller（如 `StackController::onCardClicked`）
+   - `CardView` 触发点击事件 → 调用对应 Controller（即 堆区牌调用`StackController::onCardClicked`，桌面区牌调用`PlayfieldController::onCardClicked`）
 2. **合法性检查**  
    - Controller 调用 `GameModel` 判断是否可选中/消除
 3. **执行消除**  
@@ -99,20 +99,16 @@ Resources/ # 图片、音效、字体等资源
 ### ▶ 撤销操作
 
 1. **点击撤销** → `UndoController::onUndoClicked`
-2. **恢复快照** → `UndoManager` 弹出上一次 `GameStateSnapshot`
+2. **恢复快照** → `UndoManager` 调用`moveTopBack`退回匹配区顶部 `Cardview`
 3. **重建视图** → 重新渲染所有卡牌位置与状态
 
 ---
 
 ## ③ 核心逻辑与算法实现
 
-### 1. 消除判定
-
-```cpp
-// 判断两张牌点数是否相邻（可扩展为 13 与 1 环绕）
-bool isAdjacent(int a, int b) {
-    return std::abs(a - b) == 1;
-}
+### 1. 'CardView 类':
+   ①一个CardView 由一个CardModel生成，并进行绑定，便于更新model层和刷新view层
+   
 
 ---
 
