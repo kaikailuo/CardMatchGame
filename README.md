@@ -1,25 +1,118 @@
+## 项目细节概况请查看下文
+
 # 🎴 Card Game - Cocos2d-x 项目
 
 这是一个使用 Cocos2d-x 开发的卡牌类游戏项目雏形，主要采用 MVC 架构，分离模型、视图与控制逻辑，具备良好的可维护性与扩展性。
 
 ---
 
-## 📂 项目结构说明
+## ① 📂项目结构说明
 ```
 Classes/
-├── configs
-├── models
-├── views
-├── controllers
-├── managers
-├── services
-├── utils
+├── AppDelegate.* # 程序入口
+│
+├── configs/ # 静态配置
+│ ├── loaders/
+│ │ └── LevelConfigLoader.* # 关卡 JSON 加载
+│ └── models/
+│ ├── CardAreaEnum.h # 区域枚举
+│ └── GameConfig.h # 全局常量
+│
+├── models/ # 数据模型层
+│ ├── CardModel.* # 单张卡牌状态
+│ ├── CardStateModel.* # 选中/高亮状态
+│ └── GameModel.* # 整体游戏状态
+│
+├── views/ # 视图层
+│ ├── CardView.* # 卡牌渲染与交互
+│ ├── StackCardView.* # 叠牌区视图
+│ ├── PlayfieldCardView.* # 桌面区视图
+│ ├── MatchZoneView.* # 匹配区视图
+│ ├── DrawBackgroundView.* # 背景绘制
+│ ├── LevelSelectView.* # 关卡选择界面
+│ ├── LevelButtonView.* # 关卡按钮组件
+│ ├── UndoView.* # 撤销按钮视图
+│ └── GameView.* # 主游戏界面容器
+│
+├── controllers/ # 控制器层
+│ ├── GameController.* # 总流程控制
+│ ├── StackController.* # 叠牌区逻辑
+│ ├── PlayfieldController.* # 桌面交互
+│ ├── MatchZoneController.* # 匹配区操作
+│ ├── UndoController.* # 撤销流程
+│ └── LevelSelectController.* # 关卡选择逻辑
+│
+├── managers/ # 管理器
+│ └── GameViewManager.* # View 显示/刷新管理
+│
+├── services/ # 服务层
+│ └── GameModelFromLevelGenerator.* # 根据配置生成模型
+│
+└── utils/ # 工具类
+└── Utils.* # 通用辅助（位置、JSON 等）
 AppDelegate.cpp/h # 程序入口
 
 proj.win32/ # Visual Studio 工程文件
 Resources/ # 图片、音效、字体等资源
 ```
+---
 
+---
+
+## ② 程序流程
+
+### ▶ 启动与初始化
+
+1. **AppDelegate**  
+   - 初始化引擎、预加载资源  
+   - 进入关卡选择场景 `LevelSelectScene`
+
+2. **LevelSelectController**  
+   - 调用 `LevelConfigLoader` 读取 JSON  
+   - 为每关生成 `LevelButtonView` 并注册回调  
+   - 点击关卡按钮后，切换到 `GameScene`
+
+3. **GameController**  
+   - 在 `GameScene::init()` 中创建：  
+     - `GameModel`（通过 `GameModelFromLevelGenerator` 构建）  
+     - 多个子控制器（Stack/Playfield/MatchZone/Undo）  
+     - 对应的视图层组件  
+   - 使用 `GameViewManager` 统一管理视图刷新顺序
+
+---
+
+### ▶ 交互主循环
+
+1. **卡牌点击**  
+   - `CardView` 触发点击事件 → 调用对应 Controller（如 `StackController::onCardClicked`）
+2. **合法性检查**  
+   - Controller 调用 `GameModel` 判断是否可选中/消除
+3. **执行消除**  
+   - 播放消除动画（`MoveTo` + `CallFunc`）  
+   - 更新 `GameModel`（移除数据）  
+   - 将操作前状态推入 `UndoManager` 快照栈
+4. **刷新视图**  
+   - `GameViewManager` 统一调用各视图的 `update()`，保持与模型同步
+
+---
+
+### ▶ 撤销操作
+
+1. **点击撤销** → `UndoController::onUndoClicked`
+2. **恢复快照** → `UndoManager` 弹出上一次 `GameStateSnapshot`
+3. **重建视图** → 重新渲染所有卡牌位置与状态
+
+---
+
+## ③ 核心逻辑与算法实现
+
+### 1. 消除判定
+
+```cpp
+// 判断两张牌点数是否相邻（可扩展为 13 与 1 环绕）
+bool isAdjacent(int a, int b) {
+    return std::abs(a - b) == 1;
+}
 
 ---
 
@@ -34,21 +127,7 @@ Resources/ # 图片、音效、字体等资源
 
 ---
 
-## 🧠 技术要点
 
-- 基于 Cocos2d-x 的场景与节点系统
-- 使用事件监听机制实现卡牌点击、拖动等交互
-- 管理器统一管理资源、控制器解耦业务逻辑
-- 实现了基础的撤销（Undo）机制
-- 支持卡牌堆叠、消除、拖动等操作
-
----
-
-## 📃 License
-
-本项目为个人学习项目，代码开放，仅供学习参考
-
----
 
 ## 🙋 开发者信息
 
